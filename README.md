@@ -1,6 +1,8 @@
 # Botify
 Mastodon Bot that post's your top 10 tracks in the Short, Medium and Long term to the timeline
 
+Check out https://hellsite.site/@goatify for an example!
+
 # Usage
 
 For this you'll need:
