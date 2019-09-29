@@ -61,7 +61,8 @@ def main():
     for time_range in time_ranges:
         songs = get_songs(username, time_range)
 
-        toot_text = f'{time_range}\n'
+        title = time_range.replace('_', ' ').title()
+        toot_text = f'{title}\n'
         for song in songs:
             toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
 
