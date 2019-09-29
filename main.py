@@ -1,28 +1,8 @@
 import sys
 
-import mastodon
 import spotipy
 import spotipy.util as util
 from mastodon import Mastodon
-
-
-def main():
-    if len(sys.argv) > 1:
-        username = sys.argv[1]
-    else:
-        print("Usage: %s username" % (sys.argv[0],))
-        sys.exit()
-
-    time_ranges = ['short_term', 'medium_term', 'long_term']
-
-    for time_range in time_ranges:
-        songs = get_songs(username, time_range)
-
-        toot_text = f'{time_range}\n'
-        for song in songs:
-            toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
-
-        toot(toot_text)
 
 
 def get_songs(username, time_range="short_term", no_songs=10):
@@ -36,7 +16,7 @@ def get_songs(username, time_range="short_term", no_songs=10):
             e.g. [{'song': song_name, 'artist': ['artist2', 'artist2']}]
     """
 
-    #We grab token using prompts bcs its easier than tokens. you need to run
+    # We grab token using prompts bcs its easier than tokens. you need to run
     # export SPOTIPY_CLIENT_ID=''
     # export SPOTIPY_CLIENT_SECRET=''
 
@@ -58,12 +38,31 @@ def get_songs(username, time_range="short_term", no_songs=10):
 
 
 def toot(text):
-    mastodon = Mastodon(
+    masto = Mastodon(
         access_token = "", #Enter Bot Access Token
         api_base_url = "", #Instance URL
     )
 
-    mastodon.status_post(text) 
+    masto.status_post(text)
+
+
+def main():
+    if len(sys.argv) > 1:
+        username = sys.argv[1]
+    else:
+        print("Usage: %s username" % (sys.argv[0],))
+        sys.exit()
+
+    time_ranges = ['short_term', 'medium_term', 'long_term']
+
+    for time_range in time_ranges:
+        songs = get_songs(username, time_range)
+
+        toot_text = f'{time_range}\n'
+        for song in songs:
+            toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
+
+        toot(toot_text)
 
 
 if __name__ == '__main__':
