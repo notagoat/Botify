@@ -6,6 +6,14 @@ import spotipy.util as util
 from mastodon import Mastodon
 
 
+SPOTIFY = None
+
+
+def get_spotify(username, scope):
+    token = util.prompt_for_user_token(username, scope)
+    return spotipy.Spotify(auth=token)
+
+
 def get_songs(username, time_range="short_term", no_songs=10):
     """Get top songs in a time period from Spotify.
 
@@ -18,20 +26,8 @@ def get_songs(username, time_range="short_term", no_songs=10):
             e.g. [{'song': song_name, 'artist': ['artist2', 'artist2']}]
     """
 
-    # We grab token using prompts bcs its easier than tokens. you need to run
-    # export SPOTIPY_CLIENT_ID=''
-    # export SPOTIPY_CLIENT_SECRET=''
-
-    scope = 'user-top-read'
-    token = util.prompt_for_user_token(username, scope)
-
-    if not token:
-        raise ValueError('Unable to grab token for Spotify')
-
-    sp = spotipy.Spotify(auth=token)
-    sp.trace = False
     songs = []
-    results = sp.current_user_top_tracks(
+    results = SPOTIFY.current_user_top_tracks(
         time_range=time_range, limit=no_songs
     )
     for item in results['items']:
@@ -55,6 +51,13 @@ def main():
     else:
         print("Usage: %s username" % (sys.argv[0],))
         sys.exit()
+
+    # We grab token using prompts bcs its easier than tokens. you need to run
+    # export SPOTIPY_CLIENT_ID=''
+    # export SPOTIPY_CLIENT_SECRET=''
+    scope = 'user-top-read'
+    global SPOTIFY
+    SPOTIFY = get_spotify(username, scope)
 
     time_ranges = ['short_term', 'medium_term', 'long_term']
 
