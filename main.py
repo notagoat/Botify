@@ -13,8 +13,14 @@ def main():
         print("Usage: %s username" % (sys.argv[0],))
         sys.exit()
 
-    get_songs(username)
-    toot()
+    songs = get_songs(username)
+
+    for time_range in songs:
+        toot_text = f'{time_range}\n'
+        for song in songs[time_range]:
+            toot_text += f'{song}\n'
+
+        toot(toot_text)
 
 
 def get_songs(username):
@@ -29,30 +35,28 @@ def get_songs(username):
     if token:
         sp = spotipy.Spotify(auth=token)
         sp.trace = False
+        songs = {}
         ranges = ['short_term', 'medium_term', 'long_term'] #If you only want to post short / medium / long remove them from this list.
         for range in ranges:
-            outputname = range+".txt"
-            sys.stdout = open(outputname, "w+")
+            if not songs.get(range):
+                songs[range] = []
+
             results = sp.current_user_top_tracks(time_range=range, limit=10) #We can change the limit easily
-            for i, item in enumerate(results['items']):
-                print(i+1, ':' , item['name'], '//', item['artists'][0]['name']) #hack
+            for i, item in enumerate(results['items'], start=1):
+                artist = item['artists'][0]['name']
+                song_string = f'{i}: {item["name"]} // {artist}'
+                songs[range].append(song_string)
+
+    return songs
 
 
-def toot():
+def toot(text):
     mastodon = Mastodon(
         access_token = "", #Enter Bot Access Token
         api_base_url = "", #Instance URL
     )
-    ranges = ['short_term', 'medium_term', 'long_term'] #If you only want to post short / medium / long remove them from this list.
 
-    ranges_nice = ["Short Term", "Medium Term", "Long Term"]
-    j = 0
-    for range in ranges:
-        filename = range+".txt"
-        with open(filename, "r") as file:
-            data = file.read() #Hackier
-        mastodon.status_post(ranges_nice[j]+ "\n" + data) 
-        j = j + 1
+    mastodon.status_post(text) 
 
 
 if __name__ == '__main__':
