@@ -34,7 +34,7 @@ def get_songs(username, time_range="short_term", no_songs=10):
     results = sp.current_user_top_tracks(
         time_range=time_range, limit=no_songs
     )
-    for i, item in enumerate(results['items'], start=1):
+    for item in results['items']:
         songs.append({'song': item["name"], 'artist': item['artists']})
 
     return songs
