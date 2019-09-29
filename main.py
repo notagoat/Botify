@@ -1,3 +1,4 @@
+import os
 import sys
 
 import spotipy
@@ -39,8 +40,8 @@ def get_songs(username, time_range="short_term", no_songs=10):
 
 def toot(text):
     masto = Mastodon(
-        access_token = "", #Enter Bot Access Token
-        api_base_url = "", #Instance URL
+        access_token=os.getenv('MASTO_TOKEN'),
+        api_base_url=os.getenv('MASTO_INSTANCE')
     )
 
     masto.status_post(text)
