@@ -12,6 +12,7 @@ def get_songs(username, time_range="short_term", no_songs=10):
     Args:
         username (str): Spotify username.
         time_range (str): Either "short_term", "medium_term" or "long_term".
+        no_songs (int): Number of songs to get for time period.
     Returns:
         (list): Each item is a dict which contains the song and artist keys.
             e.g. [{'song': song_name, 'artist': ['artist2', 'artist2']}]
@@ -21,19 +22,20 @@ def get_songs(username, time_range="short_term", no_songs=10):
     # export SPOTIPY_CLIENT_ID=''
     # export SPOTIPY_CLIENT_SECRET=''
 
-
     scope = 'user-top-read'
-    token = util.prompt_for_user_token(username, scope) #We need a small ass scope
+    token = util.prompt_for_user_token(username, scope)
 
-    if token:
-        sp = spotipy.Spotify(auth=token)
-        sp.trace = False
-        songs = []
-        results = sp.current_user_top_tracks(
-            time_range=time_range, limit=no_songs
-        )
-        for i, item in enumerate(results['items'], start=1):
-            songs.append({'song': item["name"], 'artist': item['artists']})
+    if not token:
+        raise ValueError('Unable to grab token for Spotify')
+
+    sp = spotipy.Spotify(auth=token)
+    sp.trace = False
+    songs = []
+    results = sp.current_user_top_tracks(
+        time_range=time_range, limit=no_songs
+    )
+    for i, item in enumerate(results['items'], start=1):
+        songs.append({'song': item["name"], 'artist': item['artists']})
 
     return songs
 
