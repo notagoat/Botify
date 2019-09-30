@@ -1,53 +1,73 @@
-import mastodon
-import pprint
+import os
 import sys
 
 import spotipy
 import spotipy.util as util
-import simplejson as json
-
 from mastodon import Mastodon
-mastodon = Mastodon(
-    access_token = "", #Enter Bot Access Token
-    api_base_url = "", #Instance URL
-)
-
-if len(sys.argv) > 1:
-    username = sys.argv[1]
-else:
-    print("Usage: %s username" % (sys.argv[0],))
-    sys.exit()
-
-#We grab token using prompts bcs its easier than tokens. you need to run
-# export SPOTIPY_CLIENT_ID=''
-# export SPOTIPY_CLIENT_SECRET=''
 
 
-scope = 'user-top-read'
-token = util.prompt_for_user_token(username, scope) #We need a small ass scope
+def get_songs(username, time_range="short_term", no_songs=10):
+    """Get top songs in a time period from Spotify.
 
-orig_stdout = sys.stdout #Save orig stdout to avoid any errors lol
+    Args:
+        username (str): Spotify username.
+        time_range (str): Either "short_term", "medium_term" or "long_term".
+        no_songs (int): Number of songs to get for time period.
+    Returns:
+        (list): Each item is a dict which contains the song and artist keys.
+            e.g. [{'song': song_name, 'artist': ['artist2', 'artist2']}]
+    """
 
-if token:
+    # We grab token using prompts bcs its easier than tokens. you need to run
+    # export SPOTIPY_CLIENT_ID=''
+    # export SPOTIPY_CLIENT_SECRET=''
+
+    scope = 'user-top-read'
+    token = util.prompt_for_user_token(username, scope)
+
+    if not token:
+        raise ValueError('Unable to grab token for Spotify')
+
     sp = spotipy.Spotify(auth=token)
     sp.trace = False
-    ranges = ['short_term', 'medium_term', 'long_term'] #If you only want to post short / medium / long remove them from this list.
-    for range in ranges:
-        outputname = range+".txt"
-        sys.stdout = open(outputname, "w+")
-        results = sp.current_user_top_tracks(time_range=range, limit=10) #We can change the limit easily
-        for i, item in enumerate(results['items']):
-            print(i+1, ':' , item['name'], '//', item['artists'][0]['name']) #hack
+    songs = []
+    results = sp.current_user_top_tracks(
+        time_range=time_range, limit=no_songs
+    )
+    for item in results['items']:
+        songs.append({'song': item["name"], 'artist': item['artists']})
 
-sys.stdout.close()
-sys.stdout=orig_stdout 
+    return songs
 
-ranges_nice = ["Short Term", "Medium Term", "Long Term"]
-j = 0
-for range in ranges:
-    filename = range+".txt"
-    with open(filename, "r") as file:
-        data = file.read() #Hackier
-    mastodon.status_post(ranges_nice[j]+ "\n" + data) 
-    j = j + 1
 
+def toot(text):
+    masto = Mastodon(
+        access_token=os.getenv('MASTO_TOKEN'),
+        api_base_url=os.getenv('MASTO_INSTANCE')
+    )
+
+    masto.status_post(text)
+
+
+def main():
+    if len(sys.argv) > 1:
+        username = sys.argv[1]
+    else:
+        print("Usage: %s username" % (sys.argv[0],))
+        sys.exit()
+
+    time_ranges = ['short_term', 'medium_term', 'long_term']
+
+    for time_range in time_ranges:
+        songs = get_songs(username, time_range)
+
+        title = time_range.replace('_', ' ').title()
+        toot_text = f'{title}\n'
+        for song in songs:
+            toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
+
+        toot(toot_text)
+
+
+if __name__ == '__main__':
+    main()
