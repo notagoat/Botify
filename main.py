@@ -31,9 +31,21 @@ def get_songs(username, time_range="short_term", no_songs=10):
         time_range=time_range, limit=no_songs
     )
     for item in results['items']:
-        songs.append({'song': item["name"], 'artist': item['artists']})
+        songs.append(
+            {'song': item["name"], 'artist': item['artists'], 'id': item['id']}
+        )
 
     return songs
+
+
+def feature_stats(data, feature):
+    songs = [x[feature] for x in data]
+    feature_avg = sum(songs) / len(songs)
+    return min(songs), max(songs), feature_avg
+
+
+def audio_features(song_ids):
+    return SPOTIFY.audio_features(song_ids)
 
 
 def toot(text):
@@ -64,8 +76,22 @@ def main():
     for time_range in time_ranges:
         songs = get_songs(username, time_range)
 
+        features = audio_features([x['id'] for x in songs])
+
+        groov = feature_stats(features, 'danceability')
+        groovy_perc = groov[1] * 100
+        groovy = f'Grooviness avg: {groovy_perc:.2f}%'
+
+        happy = feature_stats(features, 'valence')
+        happy_perc = happy[1] * 100
+        happiness = f'Happiness avg: {happy_perc:.2f}%'
+
+        speech = feature_stats(features, 'speechiness')
+        speech_perc = speech[1] * 100
+        speechiness = f'Speechiness avg: {speech_perc:.2f}%'
+
         title = time_range.replace('_', ' ').title()
-        toot_text = f'{title}\n'
+        toot_text = f'{title}\n{groovy}\n{happiness}\n{speechiness}\n'
         for song in songs:
             toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
 
