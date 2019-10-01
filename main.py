@@ -87,8 +87,8 @@ def main():
         title = time_range.replace('_', ' ').title()
         toot_text = f'_{title}_\n'
 
-        for song in songs:
-            toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
+        for num, song in enumerate(songs, start=1):
+            toot_text += f'{num}. {song["song"]} // {song["artist"][0]["name"]}\n'
 
         toot_text += '---\n'
 
