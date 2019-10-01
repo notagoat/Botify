@@ -78,22 +78,27 @@ def main():
 
         features = audio_features([x['id'] for x in songs])
 
-        groov = feature_stats(features, 'danceability')
-        groovy_perc = groov[1] * 100
-        groovy = f'Grooviness avg: {groovy_perc:.2f}%'
-
-        happy = feature_stats(features, 'valence')
-        happy_perc = happy[1] * 100
-        happiness = f'Happiness avg: {happy_perc:.2f}%'
-
-        speech = feature_stats(features, 'speechiness')
-        speech_perc = speech[1] * 100
-        speechiness = f'Speechiness avg: {speech_perc:.2f}%'
+        # Text is formatted like the following
+        # _Time Range_
+        # Song // Artist |
+        # ---
+        # Feature avg: xx.xx%
 
         title = time_range.replace('_', ' ').title()
-        toot_text = f'{title}\n{groovy}\n{happiness}\n{speechiness}\n'
+        toot_text = f'_{title}_\n'
+
         for song in songs:
             toot_text += f'{song["song"]} // {song["artist"][0]["name"]}\n'
+
+        toot_text += '---\n'
+
+        feature_names = ['danceability', 'speechiness', 'energy']
+        for feature in feature_names:
+            rating = feature_stats(features, feature)
+            rating_perc = rating[1] * 100
+            rating = f'{feature.title()} avg: {rating_perc:.2f}%'
+
+            toot_text += f'{rating}\n'
 
         toot(toot_text)
 
